@@ -8,8 +8,6 @@ import sys
 import shutil
 from shutil import move
 from shutil import make_archive
-from tabulate import tabulate
-from clint.textui import progress
 import argparse
 
 DEST_FOLDER = 'result'
@@ -27,7 +25,7 @@ def create_argparser():
     parser.add_argument('-n', '--name', required=True, help='Name of folder to be decompose.')
     parser.add_argument('-ms', '--maxsize', type=int, required=True, help='Max size output folder.')
     parser.add_argument('-mn', '--maxnum', type=int, required=True, help='Max number of files in output folder.')
-    parser.add_argument('-z', '--zip', action='store_true', default=False, 
+    parser.add_argument('-z', '--zip', action='store_true', default=False,
                         help='Optional. If you want to archive output data, you may to use this flag.')
 
     return parser
@@ -69,10 +67,8 @@ def move_file(src, dst):
 
 
 def result(move_data, total_data, folders):
-    table = [["Files processed", move_data, "out of", total_data],
-             ["Directory founded", "", "", len(folders)]]
-    headers = ["RESULT"]
-    print(tabulate(table, headers=headers, tablefmt="grid"))
+    print(f"Files processed {move_data} out of {total_data}")
+    print(f"Directory founded: {len(folders)}")
 
 
 if __name__ == "__main__":
@@ -101,23 +97,20 @@ if __name__ == "__main__":
         print(f"Failed to create {name_path}")
         exit()
 
-    with progress.Bar(label="Move files", expected_size=len(files)) as bar:
-
-        for file in files:
-            if (path.getsize(name_path) >= ms) or (len(os.listdir(name_path)) == mn):
-                number_part += 1
-                name_path = PATH_FOLDER + str(number_part)
-                if not create_folder(name_path):
-                    print(f"Failed to create {name_path}")
-                    result(move_data, total_data, folders)
-                    exit()
-            if move_file(dirr + "/" + file, name_path):
-                move_data += 1
-                bar.show(move_data)
-            else:
-                print("Work was suspended.")
+    for file in files:
+        if (path.getsize(name_path) >= ms) or (len(os.listdir(name_path)) == mn):
+            number_part += 1
+            name_path = PATH_FOLDER + str(number_part)
+            if not create_folder(name_path):
+                print(f"Failed to create {name_path}")
                 result(move_data, total_data, folders)
                 exit()
+        if move_file(dirr + "/" + file, name_path):
+            move_data += 1
+        else:
+            print("Work was suspended.")
+            result(move_data, total_data, folders)
+            exit()
 
     if namespace.zip:
         count_zip = 0
@@ -132,8 +125,8 @@ if __name__ == "__main__":
                 except MemoryError:
                     print("Not enough disk space.")
                     print(f"Total directory archived {count_zip} out of {len(list_dir)}")
-                    exit()
-            print(f"Total directory archived {count_zip}, из {len(list_dir)}")
+                    break
+            print(f"Total directory archived {count_zip} out of {len(list_dir)}")
         except OSError:
             print("Failed.")
 
@@ -152,8 +145,8 @@ if __name__ == "__main__":
         elif remove == 'n':
             break
         else:
-            remove = input("Pleas enter 'y' or 'n': ")
-
+            remove = input("Please enter 'y' or 'n': ")
+    
     remove = input(f"Do you want to remove {DEST_FOLDER} [y/n]: ")
     while True:
         if remove == 'y':
